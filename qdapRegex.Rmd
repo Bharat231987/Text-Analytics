@@ -1,0 +1,142 @@
+---
+title: "qdapRegex R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+Folks, 
+
+Recall the regex from session 1? We'd figured out ways to match regular pattewrns in text expressions.
+
+Over time, people have collaborated on systematizing and standardizing some of the regex codes developed. 
+
+Below I present R package `qdapRegex` that draws on a few such (mainly following US conventions). 
+
+## first, setup chunk
+
+```{r}
+rm(list=ls())  # clear workspace
+ if (!require(qdapRegex)) {install.packages("qdapRegex")}
+
+ library(qdapRegex)
+ require(magrittr)
+
+```
+
+### Extract Twitter Hash Tags, Name Tags, & URLs
+
+We can write regex code to capture twitter hastags, name tags and URLs. However, `ex_hash()` and sister functions in *qdapRegex* help ease the process quite a bit. Behold.
+
+```{r}
+ x <- c("@hadley I like #rstats for #ggplot2 work.",
+    "Difference between #magrittr and #pipeR, both implement pipeline operators for #rstats:
+        http://renkun.me/r/2014/07/26/difference-between-magrittr-and-pipeR.html @timelyportfolio",
+    "Slides from great talk: @ramnath_vaidya: Interactive slides from Interactive Visualization
+        presentation #user2014. http://ramnathv.github.io/user2014-rcharts/#1"
+  )
+ x  # view raw text
+ 
+ ex_hash(x)  # extract all hashtags
+ ex_tag(x)  # extract name tags
+ ex_url(x)  # extract URLs
+
+```
+
+The Q had come up earlier that whereas `\d` or `[0-9]` matches numbers, what about decimals? fractions? Etc?
+
+```{r}
+ # Extract Numbers
+ z <- c("-2 is an integer.  -4.3 and 3.33 are not.",
+    "123,456 is a lot more than -.2",
+    "hello world -.q")
+ z
+ rm_number(z)  # remove all no.s
+ ex_number(z)  # extract no.s from text
+ ex_number(z) %>% as_numeric()
+
+```
+
+### Extract Time entities
+
+Another common match use-case for regex is catching different time formats. Here too, a list of common patterns are coded into a nice wrapper func `ex_time()`:
+```{r}
+ # Extract Times
+ x <- c(
+    "I'm getting 3:04 AM just fine, but...",
+    "for 10:47 AM I'm getting 0:47 AM instead.",
+    "no time here",
+    "Some time has 12:04 with no AM/PM after it",
+    "Some time has 12:04 a.m. or the form 1:22 pm"
+    )
+ x
+ ex_time(x)
+ ex_time(x) %>% as_time()
+ ex_time(x) %>% as_time(., as.POSIXlt = TRUE)
+
+```
+
+### Phone numbers
+
+And yup, where else to go but match phone number formats. Mostly US style convention - maybe its time we build one for Indian number formats too?
+
+```{r}
+ # Extract phone numbers
+ x <- c(" Mr. Bean bought 2 tickets 2-613-213-4567 or 5555555555 call either one",
+  "43 Butter Rd, Brossard QC K0A 3P0 - 613 213 4567", 
+  "Please contact Mr. Bean (613)2134567",
+  "1.575.555.5555 is his #1 number",  
+  "7164347566",
+  "I like 1234567 dogs"
+  )
+ x # view example text
+
+ rm_phone(x)  # remove all phone no.s
+ ex_phone(x)  # extract all phone no.s
+
+```
+
+### Extract bracketed text
+
+Any text inside brackets of whatever variety can be matched and extracted. Easy to do this via regular regex too I guess but still, here goes...
+
+```{r}
+ # Extract Bracketed Text
+ y <- c("I love chicken [unintelligible]!", 
+    "Me too! (laughter) It's so good.[interrupting]",
+    "Yep it's awesome {reading}.", "Agreed. {is so much fun}")
+ 
+  y  # view example text
+
+  ex_bracket(y)   
+
+```
+
+Another cool use-case is extracting citations from academic or research texts.
+
+```{r}
+ # Extract Citations
+ w <- c("Hello World (V. Raptor, 1986) bye (Foo, 2012, pp. 1-2)",
+    "Narcissism is not dead (Rinker, 2014)",
+    "The R Core Team (2014) has many members.",
+    paste("Bunn (2005) said, \"As for elegance, R is refined, tasteful, and",
+        "beautiful. When I grow up, I want to marry R.\""),
+    "It is wrong to blame ANY tool for our own shortcomings (Baer, 2005).",
+    "Wickham's (in press) Tidy Data should be out soon.",
+    "Rinker's (n.d.) dissertation not so much.",
+    "I always consult xkcd comics for guidance (Foo, 2012; Bar, 2014).",
+    "Uwe Ligges (2007) says, \"RAM is cheap and thinking hurts\"",
+    "Silly (Bar, 2014) stuff is what Bar (2014, 2012) said."
+  )
+ w   # view example text
+ 
+ ex_citation(w) 
+ ex_citation(w) %>% as_count()
+
+```
+
+Well, that's it for now. 
+
+Most of the examples are admittedly taken directly from Tyler Rinker's Git page for the qdapRegex package.
+
+Sudhir
